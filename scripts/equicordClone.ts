@@ -4,7 +4,7 @@ import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
 
-import { patchPlugin } from "./patchPlugin";
+import { patchPlugin, pluginCommit } from "./patchPlugin";
 
 const cloneDir = path.join(".", "Equicord");
 const userPluginDir = path.join(cloneDir, "src", "userplugins", "botClient");
@@ -33,14 +33,14 @@ function runCommand(command: string, cwd?: string) {
         }
     }
 
-    // Clone user plugin only if not exists
+    // clone the plugin, then pin it to the commit the patches were written for
     if (!fs.existsSync(userPluginDir)) {
         console.log("> Cloning aiko-chan-ai/VencordDBCPlugin...");
-        runCommand(`git clone --depth 1 https://github.com/aiko-chan-ai/VencordDBCPlugin.git ${userPluginDir}`);
-        console.log("> VencordDBCPlugin clone complete.");
-    } else {
-        console.log("> VencordDBCPlugin already exists, skipping clone.");
+        runCommand(`git clone https://github.com/aiko-chan-ai/VencordDBCPlugin.git ${userPluginDir}`);
     }
+    runCommand(`git fetch origin ${pluginCommit}`, userPluginDir);
+    runCommand(`git checkout -f ${pluginCommit}`, userPluginDir);
+    console.log(`> VencordDBCPlugin pinned to ${pluginCommit.slice(0, 7)}.`);
 
     patchPlugin(userPluginDir);
 

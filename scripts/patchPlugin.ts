@@ -1,7 +1,11 @@
 /* Copyright Elysia © 2025 */
 
+import { execSync } from "child_process";
 import fs from "fs";
 import path from "path";
+
+// the patterns below are written against this exact plugin commit
+export const pluginCommit = "31ba52dc92221cddf612e6f4ef276263661d974e";
 
 // equicord's Toasts has no genId/Type/Position and a different show() shape
 const toastsShim = `import { showToast as baseShowToast, Toasts as BaseToasts } from "@webpack/common";
@@ -90,14 +94,21 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
 ];
 
 export function patchPlugin(userPluginDir: string) {
+    // always patch a pristine copy, so earlier runs can't stack or half-apply
+    execSync(`git checkout -f ${pluginCommit} -- .`, { cwd: userPluginDir, stdio: "inherit" });
     fs.writeFileSync(path.join(userPluginDir, "utils", "toasts.ts"), toastsShim);
     for (const [file, from, to, skipIfPresent] of pluginPatches) {
         const target = path.join(userPluginDir, file);
-        const src = fs.readFileSync(target, "utf8");
-        if (skipIfPresent && src.includes(skipIfPresent)) continue;
+        // windows checkouts use crlf, which the patterns below don't expect
+        const raw = fs.readFileSync(target, "utf8");
+        const src = raw.replace(/\r\n/g, "\n");
+        if (skipIfPresent && src.includes(skipIfPresent)) {
+            if (src !== raw) fs.writeFileSync(target, src);
+            continue;
+        }
         const out = src.replace(from, to);
-        if (out !== src) fs.writeFileSync(target, out);
-        else if (skipIfPresent) console.warn(`> Patch did not apply to ${file}: ${from}`);
+        if (out !== raw) fs.writeFileSync(target, out);
+        if (out === src && skipIfPresent) console.warn(`> Patch did not apply to ${file}: ${from}`);
     }
     const leftovers = ["cannot use Relationships Module", "cannot join guilds", "Cannot send messages to this bot", "data.relationships = [];", "defaultPrivateChannel"];
     const code = ["index.tsx", "utils/patches.ts"].map(f => fs.readFileSync(path.join(userPluginDir, f), "utf8")).join("\n");

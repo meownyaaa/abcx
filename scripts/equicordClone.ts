@@ -15,21 +15,27 @@ function runCommand(command: string, cwd?: string) {
 }
 
 // equicord's Toasts has no genId/Type/Position and a different show() shape
-const toastsShim = `import { showToast as baseShowToast } from "@webpack/common";
+const toastsShim = `import { showToast as baseShowToast, Toasts as BaseToasts } from "@webpack/common";
 
-// createToast isn't found on older discord builds, so never let a toast break the caller
-export const showToast = (message: string, type?: any, options?: any) => {
+const genId = () => Math.random().toString(36).slice(2);
+
+// the pinned discord build has no createToast, but its raw show() still takes the old shape
+export const showToast = (message: string, type: any = "message", options?: any) => {
     try {
-        baseShowToast(message, type, options);
-    } catch (e) {
-        console.warn("[BotClient] toast failed:", message, e);
+        (BaseToasts.show as any)({ message, type, id: genId(), options });
+    } catch {
+        try {
+            baseShowToast(message, type, options);
+        } catch (e) {
+            console.warn("[BotClient] toast failed:", message, e);
+        }
     }
 };
 
 export const Toasts = {
     Type: { MESSAGE: "message", SUCCESS: "success", FAILURE: "failure" } as const,
     Position: { TOP: 0, BOTTOM: 1 } as const,
-    genId: () => Math.random().toString(36).slice(2),
+    genId,
     show: ({ message, type, options }: { message: string; id?: string; type?: any; options?: any; }) =>
         showToast(message, type, options),
 };
@@ -73,7 +79,7 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
     ["index.tsx", /\} from "@webpack\/common";/, `} from "@webpack/common";\n${toastsImport("./utils")}`, "./utils/toasts"],
     ["index.tsx", /\n    showToast,\n/, "\n"],
     ["index.tsx", /import \{ Toasts \} from "\.\/utils\/toasts";/, 'import { showToast, Toasts } from "./utils/toasts";'],
-    ["utils/patches.ts", /(export function handleDispatchPatch\([^\n]*\{\n)/, "$1    normalizeFlatGuilds(data, eventName);\n", "normalizeFlatGuilds(data, eventName);"],
+    ["utils/patches.ts", /(export function handleDispatchPatch\([\s\S]*?\)\s*\{\n)/, "$1    normalizeFlatGuilds(data, eventName);\n", "normalizeFlatGuilds(data, eventName);"],
     ["utils/patches.ts", /\s*$/, flatGuildFn, "function normalizeFlatGuilds("],
     ["utils/patches.ts", /RestAPI, Toasts, UserStore \}/, "RestAPI, UserStore }"],
     ["utils/patches.ts", /(import \{[^}]*\} from "@webpack\/common";)/, `$1\n${toastsImport(".")}`, "./toasts"],
@@ -81,6 +87,12 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
     ["utils/patches.ts", /^        const defaultPrivateChannel = .*\n/m, ""],
     ["utils/patches.ts", /^        data\.private_channels = \[defaultPrivateChannel\];\n/m, "        data.private_channels ??= [];\n"],
     ["utils/patches.ts", /^        data\.users = \[\n\s*defaultPrivateChannel\.recipients\[0\],\n\s*\.\.\.\(data\.users \|\| \[\]\),\n\s*\];\n/m, "        data.users ??= [];\n"],
+    // spacebar treats bots like users, so drop the bot-only blocks
+    ["index.tsx", /\n        \/\/ Invite Module\n[\s\S]*?(?=\n    \},\n    chatBarButton:)/, ""],
+    ["index.tsx", /\n                \/\/ Disable Events:\n[\s\S]*?remoteCommand[^\n]*\n[^\n]*\n                \},/, ""],
+    ["index.tsx", /replace: "!\$1\.user\.bot\?"/, 'replace: "false?"'],
+    ["utils/patches.ts", /\n    if \(UserStore\.getUser\(userId\)\?\.bot\) \{[\s\S]*?\n    \}(?=\n)/, ""],
+    ["utils/patches.ts", /\n    \/\/ Overwrite videoStreamParameters to null\n    data\.videoStreamParameters = null;/, ""],
     // let friend requests etc. reach the backend
     ["index.tsx", /        \/\/ Patch Relationships modules[\s\S]*?\n        \}\n(?=        \/\/ Patch getCurrentUser)/, ""],
     ["utils/patches.ts", /^        data\.relationships = \[\];\n/m, ""],
@@ -94,7 +106,12 @@ function patchPlugin() {
         if (skipIfPresent && src.includes(skipIfPresent)) continue;
         const out = src.replace(from, to);
         if (out !== src) fs.writeFileSync(target, out);
+        else if (skipIfPresent) console.warn(`> Patch did not apply to ${file}: ${from}`);
     }
+    const leftovers = ["cannot use Relationships Module", "cannot join guilds", "Cannot send messages to this bot", "data.relationships = [];", "defaultPrivateChannel"];
+    const code = ["index.tsx", "utils/patches.ts"].map(f => fs.readFileSync(path.join(userPluginDir, f), "utf8")).join("\n");
+    for (const text of leftovers) if (code.includes(text)) console.warn(`> Plugin block still present: ${text}`);
+    if (!code.includes("normalizeFlatGuilds(data, eventName);")) console.warn("> Flat guild fix was not applied");
     console.log("> Patched VencordDBCPlugin for Equicord.");
 }
 

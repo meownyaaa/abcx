@@ -77,6 +77,10 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
     ["utils/patches.ts", /\s*$/, flatGuildFn, "function normalizeFlatGuilds("],
     ["utils/patches.ts", /RestAPI, Toasts, UserStore \}/, "RestAPI, UserStore }"],
     ["utils/patches.ts", /(import \{[^}]*\} from "@webpack\/common";)/, `$1\n${toastsImport(".")}`, "./toasts"],
+    // drop the hardcoded elysia dm, its avatar doesn't exist on custom backends
+    ["utils/patches.ts", /^        const defaultPrivateChannel = .*\n/m, ""],
+    ["utils/patches.ts", /^        data\.private_channels = \[defaultPrivateChannel\];\n/m, "        data.private_channels ??= [];\n"],
+    ["utils/patches.ts", /^        data\.users = \[\n\s*defaultPrivateChannel\.recipients\[0\],\n\s*\.\.\.\(data\.users \|\| \[\]\),\n\s*\];\n/m, "        data.users ??= [];\n"],
     // let friend requests etc. reach the backend
     ["index.tsx", /        \/\/ Patch Relationships modules[\s\S]*?\n        \}\n(?=        \/\/ Patch getCurrentUser)/, ""],
     ["utils/patches.ts", /^        data\.relationships = \[\];\n/m, ""],

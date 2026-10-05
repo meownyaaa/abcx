@@ -90,9 +90,9 @@ out
 # Nuxt.js build / generate output
 .nuxt
 /dist
-/Vencord
+/Equicord
 /build
-/VencordExtension
+/EquicordExtension
 /discohook
 /assets/editor
 

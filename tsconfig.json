@@ -30,9 +30,9 @@
   ],
   "exclude": [
     "node_modules/**/*",
-    "VencordExtension/**/*",
+    "EquicordExtension/**/*",
     "dist/**/*",
     "scripts/**/*",
-    "Vencord"
+    "Equicord"
   ]
 }

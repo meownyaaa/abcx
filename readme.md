@@ -129,7 +129,7 @@ Open a command line and execute the following commands:
 git clone https://github.com/aiko-chan-ai/DiscordBotClient.git
 cd DiscordBotClient
 npm run requirement
-npm run vencord
+npm run equicord
 npm run build:ts
 npm run build
 ```
@@ -164,7 +164,7 @@ Logging in works via the UI on first startup of the application.
 - **Voice**[^2]
 - **Nitro**[^3]
 - **Direct Message**[^4]
-- **Vencord Built-in**
+- **Equicord Built-in** (with ChangeEndpoint)
 
 [^1]: See https://discord.com/developers/docs/change-log?topic=HTTP+API#deprecating-guild-creation-by-apps
 
@@ -263,7 +263,7 @@ Hit me up if you have a similar project, and I'll gladly add it to the list.
 ## How to update to the latest Discord version ?
 
 > [!TIP]
-> This is a general guide for building from source, including downloading the latest scripts from Discord, obtaining the newest versions of Vencord and VencordDBCPlugin.
+> This is a general guide for building from source, including downloading the latest scripts from Discord, obtaining the newest versions of Equicord and VencordDBCPlugin.
 
 1. Clone this repository and navigate into its directory (skip this step if you have already done so).
 
@@ -272,10 +272,10 @@ git clone https://github.com/aiko-chan-ai/DiscordBotClient.git
 cd DiscordBotClient
 ```
 
-2. Install dependencies and fetch the latest Vencord & VencordDBCPlugin
+2. Install dependencies and fetch the latest Equicord & VencordDBCPlugin
 
 > [!NOTE]
-> If you've done this before, just run “npm install” here and “git pull” for both the Vencord and VencordDBCPlugin repositories.
+> If you've done this before, just run “npm install” here and “git pull” for both the Equicord and VencordDBCPlugin repositories.
 
 ```sh
 npm run requirement
@@ -295,7 +295,7 @@ This project was mainly inspired by [SamuelScheit](https://github.com/SamuelSche
 [Discord Bot Client](https://github.com/SamuelScheit/discord-bot-client), which he sadly didn't
 develop any further.
 
-And a big thank you to [Vencord](https://github.com/Vendicated/Vencord) developers for making it easier for me to create this app.
+And a big thank you to [Equicord](https://github.com/Equicord/Equicord) and [Vencord](https://github.com/Vendicated/Vencord) developers for making it easier for me to create this app.
 
 ## Disclaimer
 

@@ -40,7 +40,7 @@ export default class Constants extends null {
     static DiscordBackgroundColor = "#36393f";
     static GithubRepo = `${GithubUserName}/${GithubRepoName}`;
     static UserAgentDiscordBot = `DiscordBot (https://github.com/${GithubUserName}/${GithubRepoName}, v${app.getVersion()})`;
-    static VencordExtensionPath = path.join(app.getAppPath(), "VencordExtension");
+    static EquicordExtensionPath = path.join(app.getAppPath(), "EquicordExtension");
     static DiscordHTMLPath = path.join(app.getAppPath(), "assets", "snapshot", "index.html");
     static ConfigEditorHTMLPath = path.join(app.getAppPath(), "assets", "config", "index.html");
     static EditorHTMLFolderPath = path.join(app.getAppPath(), "assets", "editor"); // Beta feature

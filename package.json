@@ -14,14 +14,14 @@
   "main": "build/index.js",
   "scripts": {
     "test": "npm run build:ts && npm run start",
-    "test:vencord": "npm run vencord && npm run test",
+    "test:equicord": "npm run equicord && npm run test",
     "test:discohook": "npm run discohook && npm run test",
     "test:typescript": "tsc --noEmit",
     "build:ts": "tsc && tsc-alias",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
-    "vencord": "tsx scripts/vencordBuild.ts",
+    "equicord": "tsx scripts/equicordBuild.ts",
     "discohook": "tsx scripts/discohookBuild.ts",
     "core:update": "tsx scripts/update.ts",
     "start": "electron .",
@@ -30,8 +30,8 @@
     "linux": "electron-builder -l",
     "build:bin": "electron-builder",
     "build": "npm run build:deps && npm run build:ts && npm run build:bin",
-    "build:deps": "npm run vencord && npm run discohook",
-    "requirement": "npm install && tsx scripts/vencordClone.ts && tsx scripts/discohookClone.ts"
+    "build:deps": "npm run equicord && npm run discohook",
+    "requirement": "npm install && tsx scripts/equicordClone.ts && tsx scripts/discohookClone.ts"
   },
   "keywords": [],
   "devDependencies": {
@@ -87,7 +87,7 @@
     "files": [
       "!docs",
       "!scripts",
-      "!Vencord",
+      "!Equicord",
       "!src",
       "!tsconfig.json",
       "!tsup.config.ts",
@@ -100,7 +100,7 @@
       "assets",
       "assets/editor",
       "build",
-      "VencordExtension"
+      "EquicordExtension"
     ],
     "appId": "DiscordBotClient",
     "productName": "DiscordBotClient",
@@ -139,7 +139,7 @@
           "GenericName": "Internet Messenger",
           "Type": "Application",
           "Categories": "Network;InstantMessaging;Chat;",
-          "Keywords": "discord;bot;vencord;electron;chat;"
+          "Keywords": "discord;bot;equicord;electron;chat;"
         }
       },
       "category": "Network",

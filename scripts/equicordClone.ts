@@ -14,22 +14,42 @@ function runCommand(command: string, cwd?: string) {
     });
 }
 
+// equicord's Toasts has no genId/Type/Position and a different show() shape
+const toastsShim = `import { showToast } from "@webpack/common";
+
+export const Toasts = {
+    Type: { MESSAGE: "message", SUCCESS: "success", FAILURE: "failure" } as const,
+    Position: { TOP: 0, BOTTOM: 1 } as const,
+    genId: () => Math.random().toString(36).slice(2),
+    show: ({ message, type, options }: { message: string; id?: string; type?: any; options?: any; }) =>
+        showToast(message, type, options),
+};
+`;
+
+const toastsImport = (rel: string) => `import { Toasts } from "${rel}/toasts";`;
+
 // custom backends use their own token formats, so drop the discord-only token checks
-const pluginPatches: [file: string, from: RegExp, to: string][] = [
+const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: string][] = [
     ["utils/common.ts", /^export const RegExToken = .*$/m, "export const RegExToken = /\\S/;"],
     ["components/AuthBoxTokenLogin.tsx", /\n\s*maxLength=\{100\}/, ""],
     ["components/AuthBoxMultiTokenLogin.tsx", /\n\s*maxLength=\{100\}/, ""],
     ["index.tsx", /replace\(\/bot\/gi,/, "replace(/^bot /i,"],
+    ["index.tsx", /\n    Toasts,\n/, "\n"],
+    ["index.tsx", /\} from "@webpack\/common";/, `} from "@webpack/common";\n${toastsImport("./utils")}`, "./utils/toasts"],
+    ["utils/patches.ts", /RestAPI, Toasts, UserStore \}/, "RestAPI, UserStore }"],
+    ["utils/patches.ts", /(import \{[^}]*\} from "@webpack\/common";)/, `$1\n${toastsImport(".")}`, "./toasts"],
 ];
 
 function patchPlugin() {
-    for (const [file, from, to] of pluginPatches) {
+    fs.writeFileSync(path.join(userPluginDir, "utils", "toasts.ts"), toastsShim);
+    for (const [file, from, to, skipIfPresent] of pluginPatches) {
         const target = path.join(userPluginDir, file);
         const src = fs.readFileSync(target, "utf8");
-        const out = src.replace(from, () => to);
+        if (skipIfPresent && src.includes(skipIfPresent)) continue;
+        const out = src.replace(from, to);
         if (out !== src) fs.writeFileSync(target, out);
     }
-    console.log("> Patched VencordDBCPlugin token checks.");
+    console.log("> Patched VencordDBCPlugin for Equicord.");
 }
 
 (async () => {

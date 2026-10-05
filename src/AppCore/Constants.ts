@@ -8,29 +8,6 @@ const GithubUserName = "aiko-chan-ai";
 const GithubRepoName = "DiscordBotClient";
 
 export default class Constants extends null {
-    static BlacklistRoutes = [
-        "outbound-promotions/codes",
-        "science",
-        "applications/public",
-        "notes",
-        "member-ids",
-        "connections/",
-        "users/@me/disable",
-        "users/@me/delete",
-        "users/@me/mfa",
-        "users/@me/phone",
-        "interaction-data",
-        "member-verification",
-        "cdn-cgi/challenge-platform",
-        "explicit-media",
-        "premium/subscriptions",
-        "/ack",
-        "/stripe",
-        "/paypal",
-        "/validate-billing-address",
-        "/custom-call-sounds",
-        "auth/conditional/start", // Disable WebAuthn
-    ];
     static LatestStorageUpdate = 1735000000000;
     static AppName = "DiscordBotClient";
     static AppID = "DiscordBotClient";

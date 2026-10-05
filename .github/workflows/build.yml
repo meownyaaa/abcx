@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest, windows-latest]
+        os: [windows-latest]
 
     steps:
       - name: Check out Git repository
@@ -42,6 +42,4 @@ jobs:
           name: DiscordBotClient-nightly-${{ matrix.os }}
           path: |
             dist/*.exe
-            dist/*.AppImage
-            dist/*.dmg
 

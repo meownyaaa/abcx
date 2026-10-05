@@ -58,7 +58,12 @@ export function setupIPCEvents (mainApp: DiscordBotClient) {
                 if (!res.ok) throw new Error(res.statusText);
                 return res.json() as Promise<APIApplication>;
             })
+            // custom backends can't be queried through discord, so fall back to defaults
+            .catch(() => null)
             .then(data => {
+                if (!data) {
+                    return { success: true, data: null, intents: IntentsBitField.getIntents(), allShards: 1 };
+                }
                 const applicationFlags = new ApplicationFlagsBitField(data.flags);
                 const skipIntents = new Set<GatewayIntentBits>([
                     GatewayIntentBits.GuildPresences,

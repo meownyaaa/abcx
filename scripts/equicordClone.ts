@@ -15,7 +15,16 @@ function runCommand(command: string, cwd?: string) {
 }
 
 // equicord's Toasts has no genId/Type/Position and a different show() shape
-const toastsShim = `import { showToast } from "@webpack/common";
+const toastsShim = `import { showToast as baseShowToast } from "@webpack/common";
+
+// createToast isn't found on older discord builds, so never let a toast break the caller
+export const showToast = (message: string, type?: any, options?: any) => {
+    try {
+        baseShowToast(message, type, options);
+    } catch (e) {
+        console.warn("[BotClient] toast failed:", message, e);
+    }
+};
 
 export const Toasts = {
     Type: { MESSAGE: "message", SUCCESS: "success", FAILURE: "failure" } as const,
@@ -24,6 +33,32 @@ export const Toasts = {
     show: ({ message, type, options }: { message: string; id?: string; type?: any; options?: any; }) =>
         showToast(message, type, options),
 };
+`;
+
+// the bot gateway sends flat guilds, but the client expects them nested under properties
+const flatGuildFn = `
+const GUILD_TOP_LEVEL = new Set([
+    "id", "properties", "channels", "threads", "roles", "emojis", "stickers", "members", "presences", "voice_states",
+    "stage_instances", "guild_scheduled_events", "joined_at", "member_count", "premium_subscription_count", "lazy",
+    "large", "version", "data_mode", "unavailable", "partial_updates", "channel_updates", "unable_to_sync_deletes",
+    "has_threads_subscription", "experiments", "application_command_counts", "embedded_activities", "geo_restricted",
+]);
+
+function nestGuildProperties(guild: any) {
+    if (!guild || guild.properties != null || guild.unavailable || guild.name == null) return;
+    const properties: any = { id: guild.id };
+    for (const key of Object.keys(guild)) {
+        if (GUILD_TOP_LEVEL.has(key)) continue;
+        properties[key] = guild[key];
+        delete guild[key];
+    }
+    guild.properties = properties;
+}
+
+function normalizeFlatGuilds(data: any, eventName: string) {
+    if (eventName === "GUILD_CREATE") nestGuildProperties(data);
+    else if (eventName === "READY") data?.guilds?.forEach(nestGuildProperties);
+}
 `;
 
 const toastsImport = (rel: string) => `import { Toasts } from "${rel}/toasts";`;
@@ -36,6 +71,10 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
     ["index.tsx", /replace\(\/bot\/gi,/, "replace(/^bot /i,"],
     ["index.tsx", /\n    Toasts,\n/, "\n"],
     ["index.tsx", /\} from "@webpack\/common";/, `} from "@webpack/common";\n${toastsImport("./utils")}`, "./utils/toasts"],
+    ["index.tsx", /\n    showToast,\n/, "\n"],
+    ["index.tsx", /import \{ Toasts \} from "\.\/utils\/toasts";/, 'import { showToast, Toasts } from "./utils/toasts";'],
+    ["utils/patches.ts", /(export function handleDispatchPatch\([^\n]*\{\n)/, "$1    normalizeFlatGuilds(data, eventName);\n", "normalizeFlatGuilds(data, eventName);"],
+    ["utils/patches.ts", /\s*$/, flatGuildFn, "function normalizeFlatGuilds("],
     ["utils/patches.ts", /RestAPI, Toasts, UserStore \}/, "RestAPI, UserStore }"],
     ["utils/patches.ts", /(import \{[^}]*\} from "@webpack\/common";)/, `$1\n${toastsImport(".")}`, "./toasts"],
     // let friend requests etc. reach the backend

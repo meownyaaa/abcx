@@ -38,6 +38,9 @@ const pluginPatches: [file: string, from: RegExp, to: string, skipIfPresent?: st
     ["index.tsx", /\} from "@webpack\/common";/, `} from "@webpack/common";\n${toastsImport("./utils")}`, "./utils/toasts"],
     ["utils/patches.ts", /RestAPI, Toasts, UserStore \}/, "RestAPI, UserStore }"],
     ["utils/patches.ts", /(import \{[^}]*\} from "@webpack\/common";)/, `$1\n${toastsImport(".")}`, "./toasts"],
+    // let friend requests etc. reach the backend
+    ["index.tsx", /        \/\/ Patch Relationships modules[\s\S]*?\n        \}\n(?=        \/\/ Patch getCurrentUser)/, ""],
+    ["utils/patches.ts", /^        data\.relationships = \[\];\n/m, ""],
 ];
 
 function patchPlugin() {

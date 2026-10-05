@@ -5,6 +5,8 @@ import path from "path";
 import process from "process";
 import { existsSync, renameSync, rmSync, readFileSync, writeFileSync } from "fs";
 
+import { patchPlugin } from "./patchPlugin";
+
 function runCommand(cmd: string, args: string[], opts: { cwd?: string } = {}): Promise<void> {
     return new Promise((resolve, reject) => {
         const child = spawn(cmd, args, {
@@ -77,6 +79,8 @@ function copyAndPatch() {
 
 async function main() {
     try {
+        // re-apply in case the plugin was cloned or reset since the last requirement run
+        patchPlugin(path.join(process.cwd(), "Equicord", "src", "userplugins", "botClient"));
         await buildEquicord();
         copyAndPatch();
         console.log("🎉 All done.");
